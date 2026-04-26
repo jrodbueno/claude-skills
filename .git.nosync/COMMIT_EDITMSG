@@ -1,1 +1,1 @@
-refactor: replace triage with sync, update orchestrator with clean loop
+feat: add workstreams-build skill — pick, plan parallel, execute, test, verify

@@ -114,22 +114,47 @@ After all items pass verification:
 
 1. **Commit** with conventional commit messages referencing the workstream name
 2. **Push** to the current branch
-3. **Report discoveries**: list any new work found during build for `/workstreams-add`
-4. **Suggest sync**: "Run `/workstreams-sync` to update Notion with what was shipped."
+
+## Step 6: Micro-sync to Notion
+
+Update Notion immediately — don't wait for `/workstreams-sync`. This captures context while it's fresh, especially when multiple build sessions happen before a full sync.
+
+For each workstream touched in this session, use `notion-update-page`:
+
+```json
+{
+  "Status": "shipped|built",
+  "Session log": "[date]: [what was built, key decisions, files changed, test results]. Commit: [hash]."
+}
+```
+
+**Status rules:**
+- All acceptance criteria verified → **shipped**
+- Partially met, code merged → **built** (note what's left in session log)
+
+**Also in micro-sync:**
+- Add any discovered work as new inbox items via `notion-create-pages`
+- Check if any blocked workstreams are now unblocked (all "Blocked by" items shipped) and note them
+
+## Step 7: Report
 
 ```
 ## Build complete
 
-### Shipped
-- [Name]: [one-line summary of what was built]
-- [Name]: [one-line summary of what was built]
+### Shipped (updated in Notion)
+- [Name]: [one-line summary]
 
-### Discovered during build (add to backlog)
-- [description of new work found]
+### Built (needs more work)
+- [Name]: [what's left]
 
-### Next step
-Run `/workstreams-sync` to update Notion.
+### Discovered (added to inbox)
+- [Name]: [description]
+
+### Newly unblocked
+- [Name]: all prereqs shipped, ready to build next
 ```
+
+`/workstreams-sync` still runs as a full reconciliation — it catches anything the micro-sync missed, handles multi-session drift, and generates the aggregate report. Micro-sync is the "save your work" step; full sync is the "audit everything" step.
 
 ## Picking strategy
 
