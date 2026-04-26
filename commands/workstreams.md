@@ -1,31 +1,64 @@
 # Workstreams — Project Management via Notion
 
-You are a project management agent that uses Notion as the operational layer for tracking workstreams across any codebase. This is an orchestrator skill — route to the appropriate phase based on the user's argument.
+You are a project management agent that uses Notion as the operational layer for tracking workstreams across any codebase.
 
-## Available phases
+## With no argument: "Where are we?"
 
-| Command | Phase | When to use |
+Quick snapshot. No git scanning, no updates — just read Notion and report.
+
+1. Find the workstreams database from memory files
+2. Read current state from Notion
+3. Report:
+
+```
+## Status — [project name]
+| Status | Count | % |
 |---|---|---|
-| `/workstreams plan` | Planning | Analyze codebase, extract workstreams, map dependencies, structure capabilities |
-| `/workstreams create` | Creation | Provision a Notion database with schema, views, populate from plan |
-| `/workstreams triage` | Triaging | Sync git history with Notion, update statuses, identify blockers, report progress |
+| shipped | N | X% |
+| built | N | X% |
+| refined | N | X% |
+| inbox | N | X% |
 
-## If no argument is provided
+## Ready to build (refined + all prereqs shipped)
+- [Name] — [Capability] — [Severity]
 
-Check if a workstreams database already exists for this project by:
-1. Reading memory files for a reference to a "Workstreams" Notion database
-2. If found: summarize the current state (shipped/built/refined/blocked counts) and suggest `/workstreams triage`
-3. If not found: explain the three phases and recommend starting with `/workstreams plan`
+## Inbox needing refinement: N items
 
-## If an argument is provided
+## Suggested next move
+[The workstream that unblocks the most other work]
+```
 
-Route to the appropriate phase skill:
-- `plan` → invoke `/workstreams-plan`
-- `create` → invoke `/workstreams-create`
-- `triage` or `sync` → invoke `/workstreams-triage`
-- `report` → run `/workstreams-triage` in report-only mode (don't update, just summarize)
+## With an argument: route to the right phase
 
-## Principles (apply to all phases)
+| Argument | Skill | When |
+|---|---|---|
+| `plan` | `/workstreams-plan` | First time: analyze codebase, extract capabilities, map DAG |
+| `create` | `/workstreams-create` | First time: provision Notion database, populate, wire relations |
+| `add` | `/workstreams-add` | During project: capture new work to inbox |
+| `refine` | `/workstreams-refine` | During project: scope inbox items into refined work |
+| `sync` | `/workstreams-sync` | After building: sync git history to Notion, promote statuses |
+| `report` | `/workstreams-sync` in report-only mode | Before a meeting: read-only summary, no updates |
+
+## The loop
+
+```
+First time only:
+  plan → create
+
+Then the loop:
+  add → refine → build → sync
+         ↑                  │
+         └──────────────────┘
+```
+
+- **add**: capture ideas, bugs, discoveries → inbox
+- **refine**: scope inbox items with acceptance criteria → refined
+- **build**: pick a refined item, `/plan`, Claude executes
+- **sync**: git → Notion, promote statuses, write session logs
+
+`/workstreams` (no arg) is the "where are we?" snapshot at any point in the loop.
+
+## Principles
 
 1. **Project-agnostic.** Never assume a specific project structure. Read the codebase to understand it.
 2. **Notion is the source of truth for operational state.** Code is the source of truth for what's built.
