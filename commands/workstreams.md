@@ -36,6 +36,7 @@ Quick snapshot. No git scanning, no updates — just read Notion and report.
 | `create` | `/workstreams-create` | First time: provision Notion database, populate, wire relations |
 | `add` | `/workstreams-add` | During project: capture new work to inbox |
 | `refine` | `/workstreams-refine` | During project: scope inbox items into refined work |
+| `build` | `/workstreams-build` | During project: pick, plan (parallel), execute, test, verify |
 | `sync` | `/workstreams-sync` | After building: sync git history to Notion, promote statuses |
 | `report` | `/workstreams-sync` in report-only mode | Before a meeting: read-only summary, no updates |
 
@@ -53,7 +54,7 @@ Then the loop:
 
 - **add**: capture ideas, bugs, discoveries → inbox
 - **refine**: scope inbox items with acceptance criteria → refined
-- **build**: pick a refined item, `/plan`, Claude executes
+- **build**: pick ready items, plan (parallel agents if possible), execute, test, verify
 - **sync**: git → Notion, promote statuses, write session logs
 
 `/workstreams` (no arg) is the "where are we?" snapshot at any point in the loop.

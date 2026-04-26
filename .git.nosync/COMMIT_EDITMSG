@@ -1,1 +1,1 @@
-feat: add workstreams-add and workstreams-refine skills
+refactor: replace triage with sync, update orchestrator with clean loop
