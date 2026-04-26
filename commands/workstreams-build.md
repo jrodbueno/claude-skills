@@ -83,28 +83,24 @@ Monitor agents. When all complete, merge worktrees.
 - If scope grows beyond acceptance criteria → flag it, don't silently expand
 - If a dependency you thought was shipped is actually broken → stop and report
 
-## Step 4: Test
+## Step 4: Test (red-green for boundary work)
 
-After building, verify the work meets acceptance criteria:
+### For boundary-layer work (RLS, APIs, webhooks, integrations, data transforms):
+1. **Red**: Write tests FROM the acceptance criteria BEFORE writing implementation code. Run them. They must fail.
+2. **Green**: Write the minimum code to make tests pass.
+3. **Refactor**: Clean up with tests protecting you.
 
+### For all work:
 1. **Type check**: `pnpm type-check` or equivalent
 2. **Lint**: `pnpm lint` or equivalent
 3. **Tests**: `pnpm test` or run relevant test suites
 4. **Acceptance criteria**: go through each criterion from Notion and verify
 5. **UI verification**: if frontend changes, start dev server and check in browser
 
-Report results:
-```
-## Verification
-
-### [Workstream name]
-- [ ] Type check: pass/fail
-- [ ] Lint: pass/fail
-- [ ] Tests: pass/fail (N passing, N failing)
-- [ ] Acceptance criteria:
-  - [criterion 1]: verified / not met / partial
-  - [criterion 2]: verified / not met / partial
-```
+### What does NOT need TDD:
+- React components and page layouts (verify visually)
+- Design tokens and styling (visual output)
+- Payload collection configs (declarative)
 
 If anything fails, fix it before proceeding. If acceptance criteria can't be fully met, explain what's left and whether to mark as "built" (partial) or "shipped" (complete).
 
@@ -119,33 +115,44 @@ After all items pass verification:
 
 Update Notion immediately — don't wait for `/workstreams-sync`. This captures context while it's fresh, especially when multiple build sessions happen before a full sync.
 
-For each workstream touched in this session, use `notion-update-page`:
+For each workstream touched in this session, use `notion-update-page`.
+
+**The session log is written for someone who will never read code.** It must answer: what was done, does it work, and what's left. No file paths or function names — describe behavior and outcomes.
 
 ```json
 {
   "Status": "shipped|built",
-  "Session log": "[date]: [what was built, key decisions, files changed, test results]. Commit: [hash]."
+  "Verified": "__YES__|__NO__",
+  "Session log": "[date]: [what was built in plain language]. [test outcome — e.g., '4/4 acceptance tests passing' or 'filters work but URL state not persisting yet']. [if boundary work: 'TDD: N tests written, all green']. Commit: [hash]."
 }
 ```
 
-**Status rules:**
-- All acceptance criteria verified → **shipped**
-- Partially met, code merged → **built** (note what's left in session log)
+**Status + Verified rules:**
+- All acceptance criteria verified + tests pass → **shipped** + **Verified = YES**
+- Partially met, code merged → **built** + **Verified = NO** (session log explains what's left)
+- Boundary work without tests → **built** at most, never shipped (tests are required for boundary layers)
+
+**Session log examples (good):**
+- "2026-04-25: Inventory sync now runs every 15 min via pg_cron. Handles insert/update/mark_sold with per-tenant error isolation. TDD: 36 tests written, all green. Commit: c01bd56."
+- "2026-04-25: Meta CAPI destination wired. Events map to ViewContent/Lead/Purchase. Access token read from tenant config. Needs real test events to verify match rate — can't fully verify without Meta credentials. Commit: c01bd56."
+
+**Session log examples (bad — too technical):**
+- "Updated sync.ts to add diffInventory() function, modified packages/integrations/inventory/src/providers/mock.ts"
 
 **Also in micro-sync:**
 - Add any discovered work as new inbox items via `notion-create-pages`
-- Check if any blocked workstreams are now unblocked (all "Blocked by" items shipped) and note them
+- Check if any blocked workstreams are now unblocked (all "Blocked by" items shipped) and flag them
 
 ## Step 7: Report
 
 ```
 ## Build complete
 
-### Shipped (updated in Notion)
-- [Name]: [one-line summary]
+### Shipped (updated in Notion, verified)
+- [Name]: [what it does now, in plain language]
 
 ### Built (needs more work)
-- [Name]: [what's left]
+- [Name]: [what works, what's left]
 
 ### Discovered (added to inbox)
 - [Name]: [description]
